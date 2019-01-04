@@ -29,6 +29,10 @@ from google.assistant.library.event import EventType
 from google.assistant.library.file_helpers import existing_file
 from google.assistant.library.device_helpers import register_device
 
+import subprocess
+import logging
+from systemd.journal import JournalHandler
+
 try:
     FileNotFoundError
 except NameError:
@@ -43,6 +47,12 @@ WARNING_NOT_REGISTERED = """
     https://developers.google.com/assistant/sdk/guides/library/python/embed/register-device
 """
 
+player_path = 'paplay'
+mp3_path = '/var/lib/hass/wuuplow.wav'
+
+log = logging.getLogger('assistant')
+log.addHandler(JournalHandler())
+log.setLevel(logging.INFO)
 
 def process_event(event):
     """Pretty prints events.
@@ -55,8 +65,10 @@ def process_event(event):
     """
     if event.type == EventType.ON_CONVERSATION_TURN_STARTED:
         print()
+        subprocess.run([player_path, mp3_path])
 
     print(event)
+    log.info(event)
 
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
@@ -64,7 +76,7 @@ def process_event(event):
     if event.type == EventType.ON_DEVICE_ACTION:
         for command, params in event.actions:
             print('Do command', command, 'with params', str(params))
-
+            log.info('Do command', command, 'with params', str(params))
 
 def main():
     parser = argparse.ArgumentParser(
